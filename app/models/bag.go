@@ -15,11 +15,15 @@ type Bag struct {
 }
 
 func (b *Bag) PayloadVolume() uint {
-	return 0
+	var usedVolume uint = 0
+	for i := range b.Cuboids {
+		usedVolume += b.Cuboids[i].PayloadVolume()
+	}
+	return usedVolume
 }
 
 func (b *Bag) AvailableVolume() uint {
-	return 0
+	return b.Volume - b.PayloadVolume()
 }
 
 func (b *Bag) SetDisabled(value bool) {
