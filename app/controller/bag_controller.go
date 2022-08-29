@@ -21,17 +21,29 @@ func ListBags(c *gin.Context) {
 	c.JSON(http.StatusOK, bags)
 }
 
+func FindBag(cuboidID string) (*models.Bag, error) {
+
+	var bag models.Bag
+	if r := db.CONN.Preload("Cuboids").First(&bag, cuboidID); r.Error != nil {
+		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("not Found")
+		} else {
+			return nil, r.Error
+		}
+	}
+	return &bag, nil
+}
+
 func GetBag(c *gin.Context) {
 	bagID := c.Param("bagID")
 
-	var bag models.Bag
-	if r := db.CONN.Preload("Cuboids").First(&bag, bagID); r.Error != nil {
-		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+	bag, err := FindBag(bagID)
+	if err != nil {
+		if err.Error() == "not Found" {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
-
 		return
 	}
 
